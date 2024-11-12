@@ -1,0 +1,86 @@
+
+SPOS 3 :INPUT
+
+
+# producer task def producer(queue):
+from random import random
+from time import sleep
+from queue import Queue
+from threading import Thread
+
+#Producer task
+def producer(queue):
+    print('Producer: Running')    
+# generate items     
+    for i in range(10):        
+    # generate a value        
+        value = random()      
+    # block, to simulate effort    
+        sleep(value)        
+# create a tuple       
+        item = (i, value)    
+# add to the queue        
+        queue.put(item)         
+# report progress        
+        print(f'>producer added {item}')     
+# signal that there are no further items     
+    queue.put(None)    
+    print('Producer: Done') 
+  
+# consumer task 
+def consumer(queue):  
+    print('Consumer: Running')     
+    # consume items     
+    while True:        
+        # get a unit of work      
+        item = queue.get()        
+        # check for stop        
+        if item is None: 
+            break 
+        # block, to simulate effort         
+        sleep(item[1])       
+    # report         
+        print(f'>consumer got {item}') 
+    # all done 
+    print('Consumer: Done') 
+
+queue = Queue()
+  
+# create the shared queue queue = Queue()
+# start the consumer 
+consumer_thread = Thread(target=consumer, args=(queue,)) 
+consumer_thread.start() 
+# start the producer
+producer_thread = Thread(target=producer, args=(queue,)) 
+producer_thread.start()
+# wait for all threads to finish
+producer_thread.join() 
+consumer_thread.join() 
+
+
+Output:
+
+Consumer: Running
+Producer: Running
+>producer added (0, 0.9883510034568241)
+>producer added (1, 0.2530143066079992)
+>producer added (2, 0.48877175378670534)
+>consumer got (0, 0.9883510034568241)
+>consumer got (1, 0.2530143066079992)
+>producer added (3, 0.5864108350013503)
+>consumer got (2, 0.48877175378670534)
+>producer added (4, 0.8930499297576907)
+>consumer got (3, 0.5864108350013503)
+>producer added (5, 0.9218269025375208)
+>consumer got (4, 0.8930499297576907)
+>producer added (6, 0.590213571003281)
+>consumer got (5, 0.9218269025375208)
+>producer added (7, 0.4033112394481261)
+>producer added (8, 0.3645391783782832)
+>producer added (9, 0.17362127339887756)
+Producer: Done
+>consumer got (6, 0.590213571003281)
+>consumer got (7, 0.4033112394481261)
+>consumer got (8, 0.3645391783782832)
+>consumer got (9, 0.17362127339887756)
+Consumer: Done

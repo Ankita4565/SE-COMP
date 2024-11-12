@@ -1,0 +1,100 @@
+class MacroProcessor:
+    def __init__(self):
+        self.mnt = {}  # Macro Name Table {macro_name: mdt_index}
+        self.mdt = []  # Macro Definition Table
+
+    def pass1(self, input_lines):
+        intermediate_code = []
+        in_macro_def = False  # Flag to check if inside a macro definition
+        current_macro_name = ''
+        mdt_index = 0  # Index for MDT
+
+        for line in input_lines:
+            tokens = line.strip().split()
+            if not tokens:
+                continue
+            # Start of macro definition
+            if tokens[0] == 'MACRO':
+                in_macro_def = True
+                continue
+            # Processing macro definition
+            if in_macro_def:
+                if not current_macro_name:
+                    # First line after MACRO keyword is the macro name
+                    current_macro_name = tokens[0]
+                    self.mnt[current_macro_name] = mdt_index  # Add to MNT with current MDT index
+                else:
+                    # Add macro definition lines to MDT
+                    self.mdt.append(line.strip())
+                    mdt_index += 1
+                # End of macro definition
+                if tokens[0] == 'MEND':
+                    in_macro_def = False
+                    current_macro_name = ''
+            else:
+                # Add non-macro lines to intermediate code
+                intermediate_code.append(line.strip())
+
+        return intermediate_code
+
+    def pass2(self, intermediate_code):
+        output_code = []
+        for line in intermediate_code:
+            tokens = line.strip().split()
+            if not tokens:
+                continue
+            macro_name = tokens[0]
+            if macro_name in self.mnt:
+                # Expand macro if found in MNT
+                self.expand_macro(self.mnt[macro_name], tokens[1:], output_code)
+            else:
+                # Add non-macro lines to output code
+                output_code.append(line.strip())
+        
+        return output_code
+
+    def expand_macro(self, mdt_index, args, output_code):
+        while self.mdt[mdt_index] != 'MEND':
+            line = self.mdt[mdt_index]
+            # Replace macro arguments with actual values
+            expanded_line = self.replace_args(line, args)
+            output_code.append(expanded_line)
+            mdt_index += 1
+
+    def replace_args(self, line, args):
+        tokens = line.split()
+        # Replace &1, &2, ... with actual arguments
+        return ' '.join(args[int(tok[1:]) - 1] if tok.startswith('&') else tok for tok in tokens)
+
+# Example Program
+if __name__ == "__main__":
+    input_lines = [
+        "MACRO",
+        "INCR &1, &2",
+        "ADD &1",
+        "SUB &2",
+        "ADD &1",
+        "MEND",
+        "START",
+        "INCR A B",
+        "INCR aa bb", 
+        "END"
+    ]
+    macro_processor = MacroProcessor()
+    intermediate_code = macro_processor.pass1(input_lines)
+    output_code = macro_processor.pass2(intermediate_code)
+
+    # Print results
+    print("MNT:", macro_processor.mnt)  # Macro Name Table
+    print("MDT:", macro_processor.mdt)  # Macro Definition Table
+    print("Intermediate Code:", intermediate_code)  # Intermediate Code without macro definitions
+    print("Output Code:", output_code)  # Final expanded code after macro expansion
+
+
+
+Output:
+
+MNT: {'INCR': 0}
+MDT: ['ADD &1', 'SUB &2', 'ADD &1', 'MEND']
+Intermediate Code: ['START', 'INCR A B', 'INCR aa bb', 'END']
+Output Code: ['START', 'ADD A', 'SUB B', 'ADD A', 'ADD aa', 'SUB bb', 'ADD aa', 'END']

@@ -1,0 +1,159 @@
+
+SPOS 1
+
+Program 1:code2.txt
+START
+SYM1 DS 1
+ADD AREG SYM1
+SUB BREG = '10'
+LABEL1 DIV CREG N
+READ SYM1
+PRINT N
+BC ANY LABEL1
+PRINT SYM1
+N DS 1
+END
+
+python code:
+
+opcode_table = { "STOP" : '00', 
+"ADD" : '01', 
+"SUB" : '02', 
+"MULT" : '03', 
+"MOVER" : '04', 
+"MOVEM" : '05', 
+"COMP" : '06', 
+"BC" : '07', 
+"DIV" : '08', 
+"READ" : '09', 
+"PRINT" : '10' 
+} 
+register_table ={"AREG" : '1', 
+"BREG" : '2', 
+"CREG" : '3' 
+} 
+conditional_code={"LT" : '1', 
+"LE" : '2', 
+"GT" : '3', "GE" : '4', "EQ" : '5', 
+"ANY" : '6' 
+} 
+assembler_directive = {"START" : "", 
+"END" : "", 
+"DC" : "", 
+"DS" : "" 
+} 
+symbol_table ={} 
+literal_table = {}
+LC = 0 
+with open("code2.txt") as f:
+    for line in f:
+        words = line.strip('\n').split(' ')
+        print(words)
+        
+        for i in words:
+            if i in register_table:
+                print(register_table[i]), 
+            elif i in conditional_code:
+                print(conditional_code[i]), 
+            elif i in assembler_directive:
+                if i == "START":
+                    LC = 100 
+                if i == "END":
+                    for j in literal_table:
+                        literal_table[j] = LC
+                    LC = LC + 1 
+            elif i in opcode_table:
+                print(opcode_table[i]), 
+            else:
+                if i[0].isalpha():
+                    if i in symbol_table and symbol_table[i] != "":
+                        print(symbol_table[i]), 
+                    else:
+                        if words[0] == i:
+                            symbol_table[i] = LC 
+                        else:
+                            symbol_table[i] = "" 
+                    print("S{0}".format(symbol_table.keys())) 
+                if i[0] == "=":
+                    literal_table[i] = ""
+                    print("L{0}".format(literal_table.keys())) 
+            print("     LC:", LC) 
+            if i != "START" and i != "END":
+                LC += 1
+
+f = open("output.txt", 'w')
+f.close()
+
+print("Symbol Table:", symbol_table) 
+print("Literal Table:", literal_table) 
+f.close()
+
+
+Output: 
+
+['START']
+     LC: 100
+['SYM1', 'DS', '1']
+Sdict_keys(['SYM1'])
+     LC: 100
+     LC: 101
+     LC: 102
+['ADD', 'AREG', 'SYM1']
+01
+     LC: 103
+1
+     LC: 104
+100
+Sdict_keys(['SYM1'])
+     LC: 105
+['SUB', 'BREG', '=', "'10'"]
+02
+     LC: 106
+2
+     LC: 107
+Ldict_keys(['='])
+     LC: 108
+     LC: 109
+['LABEL1', 'DIV', 'CREG', 'N']
+Sdict_keys(['SYM1', 'LABEL1'])
+     LC: 110
+08
+     LC: 111
+3
+     LC: 112
+Sdict_keys(['SYM1', 'LABEL1', 'N'])
+     LC: 113
+['READ', 'SYM1']
+09
+     LC: 114
+100
+Sdict_keys(['SYM1', 'LABEL1', 'N'])
+     LC: 115
+['PRINT', 'N']
+10
+     LC: 116
+Sdict_keys(['SYM1', 'LABEL1', 'N'])
+     LC: 117
+['BC', 'ANY', 'LABEL1']
+07
+     LC: 118
+6
+     LC: 119
+110
+Sdict_keys(['SYM1', 'LABEL1', 'N'])
+     LC: 120
+['PRINT', 'SYM1']
+10
+     LC: 121
+100
+Sdict_keys(['SYM1', 'LABEL1', 'N'])
+     LC: 122
+['N', 'DS', '1']
+Sdict_keys(['SYM1', 'LABEL1', 'N'])
+     LC: 123
+     LC: 124
+     LC: 125
+['END']
+     LC: 127
+Symbol Table: {'SYM1': 100, 'LABEL1': 110, 'N': 123}
+Literal Table: {'=': 126}
